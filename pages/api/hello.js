@@ -37,53 +37,57 @@ const abi = [
 ];
 
 export default async function handler(req, res) {
-  await connectMongo();
-  const logData = req.body.logs[0]?.data;
-  const logTopics = [
-    req.body.logs[0]?.topic0,
-    req.body.logs[0]?.topic1,
-    req.body.logs[0]?.topic2,
-    req.body.logs[0]?.topic3,
-  ];
-  const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
-  const filter = {
-    nftAddress: decodedLog["nftAddress"],
-    tokenId: decodedLog["tokenId"],
-  };
-  let updated = { price: decodedLog["price"], seller: decodedLog["seller"] };
-  let updateResult;
-  try {
-    updateResult = await ActiveItem.findOneAndUpdate(filter, updated, {
-      new: true,
-    });
-  } catch (e) {
-    console.log("not found");
-  }
-  const isUpdateRequest = !!updateResult;
-  console.log("ISUPDATED", isUpdateRequest);
-  if (!isUpdateRequest) {
-    console.log("SHOULD BE HERE");
-    var listedItem = new ListItem({
-      seller: decodedLog["seller"],
+  if (req.body.logs.length > 0) {
+    await connectMongo();
+    const logData = req.body.logs[0]?.data;
+    const logTopics = [
+      req.body.logs[0]?.topic0,
+      req.body.logs[0]?.topic1,
+      req.body.logs[0]?.topic2,
+      req.body.logs[0]?.topic3,
+    ];
+    const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
+    const filter = {
       nftAddress: decodedLog["nftAddress"],
       tokenId: decodedLog["tokenId"],
-      price: decodedLog["price"],
-    });
-    var activeItem = new ActiveItem({
-      seller: decodedLog["seller"],
-      nftAddress: decodedLog["nftAddress"],
-      tokenId: decodedLog["tokenId"],
-      price: decodedLog["price"],
-    });
+    };
+    let updated = { price: decodedLog["price"], seller: decodedLog["seller"] };
+    let updateResult;
     try {
-      await listedItem.save();
-      await activeItem.save();
+      updateResult = await ActiveItem.findOneAndUpdate(filter, updated, {
+        new: true,
+      });
     } catch (e) {
-      console.log(e);
+      console.log("not found");
     }
-    console.log(decodedLog);
+    const isUpdateRequest = !!updateResult;
+    console.log("ISUPDATED", isUpdateRequest);
+    if (!isUpdateRequest) {
+      console.log("SHOULD BE HERE");
+      var listedItem = new ListItem({
+        seller: decodedLog["seller"],
+        nftAddress: decodedLog["nftAddress"],
+        tokenId: decodedLog["tokenId"],
+        price: decodedLog["price"],
+      });
+      var activeItem = new ActiveItem({
+        seller: decodedLog["seller"],
+        nftAddress: decodedLog["nftAddress"],
+        tokenId: decodedLog["tokenId"],
+        price: decodedLog["price"],
+      });
+      try {
+        await listedItem.save();
+        await activeItem.save();
+      } catch (e) {
+        console.log(e);
+      }
+      console.log(decodedLog);
 
-    res.status(200).send();
+      res.status(200).send();
+    } else {
+      res.status(200).send();
+    }
   } else {
     res.status(200).send();
   }
