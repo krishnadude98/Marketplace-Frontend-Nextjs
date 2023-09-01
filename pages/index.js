@@ -43,7 +43,10 @@ export default function Home() {
               ) : (
                 listings.map((nft, index) => {
                   return (
-                    <div className=" text-white">
+                    <div
+                      className=" text-white"
+                      key={`${nft.nftAddress}${nft.tokenId}`}
+                    >
                       <NftBox
                         price={nft.price}
                         nftAddress={nft.nftAddress}
