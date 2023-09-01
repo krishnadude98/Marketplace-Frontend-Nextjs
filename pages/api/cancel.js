@@ -30,39 +30,43 @@ const abi = [
 ];
 
 export default async function handler(req, res) {
-  console.log(req.body);
-  console.log(req.body.logs);
-  const logData = req.body.logs[0]?.data;
-  const logTopics = [
-    req.body.logs[0]?.topic0,
-    req.body.logs[0]?.topic1,
-    req.body.logs[0]?.topic2,
-    req.body.logs[0]?.topic3,
-  ];
-  const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
-  console.log(decodedLog);
-  try {
-    await connectMongo();
-    const filter = {
-      nftAddress: decodedLog["nftAddress"],
-      tokenId: decodedLog["tokenId"],
-    };
-    const updated = { seller: decodedLog["seller"] };
-    await CancelItem.findOneAndUpdate(filter, updated, {
-      upsert: true,
-    });
-    await ActiveItem.findOne({
-      seller: decodedLog["seller"],
-      nftAddress: decodedLog["nftAddress"],
-      tokenId: decodedLog["tokenId"],
-    }).deleteMany();
-    await ListItem.findOne({
-      seller: decodedLog["seller"],
-      nftAddress: decodedLog["nftAddress"],
-      tokenId: decodedLog["tokenId"],
-    }).deleteMany();
-  } catch (e) {
-    console.log(e);
+  if (req.body.logs.length > 0) {
+    console.log(req.body);
+    console.log(req.body.logs);
+    const logData = req.body.logs[0]?.data;
+    const logTopics = [
+      req.body.logs[0]?.topic0,
+      req.body.logs[0]?.topic1,
+      req.body.logs[0]?.topic2,
+      req.body.logs[0]?.topic3,
+    ];
+    const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
+    console.log(decodedLog);
+    try {
+      await connectMongo();
+      const filter = {
+        nftAddress: decodedLog["nftAddress"],
+        tokenId: decodedLog["tokenId"],
+      };
+      const updated = { seller: decodedLog["seller"] };
+      await CancelItem.findOneAndUpdate(filter, updated, {
+        upsert: true,
+      });
+      await ActiveItem.findOne({
+        seller: decodedLog["seller"],
+        nftAddress: decodedLog["nftAddress"],
+        tokenId: decodedLog["tokenId"],
+      }).deleteMany();
+      await ListItem.findOne({
+        seller: decodedLog["seller"],
+        nftAddress: decodedLog["nftAddress"],
+        tokenId: decodedLog["tokenId"],
+      }).deleteMany();
+    } catch (e) {
+      console.log(e);
+    }
+    res.status(200).send();
+  } else {
+    res.status(200).send();
   }
-  res.status(200).send();
 }

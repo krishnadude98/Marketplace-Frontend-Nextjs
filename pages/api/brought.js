@@ -35,28 +35,32 @@ const abi = [
 ];
 
 export default async function handler(req, res) {
-  console.log(req.body.logs);
-  await connectMongo();
-  const logData = req.body.logs[0]?.data;
-  const logTopics = [
-    req.body.logs[0]?.topic0,
-    req.body.logs[0]?.topic1,
-    req.body.logs[0]?.topic2,
-    req.body.logs[0]?.topic3,
-  ];
-  const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
-  console.log(decodedLog);
-  var boughtItem = new BoughtItem({
-    buyer: decodedLog["buyer"],
-    nftAddress: decodedLog["nftAddress"],
-    tokenId: decodedLog["tokenId"],
-    price: decodedLog["price"],
-  });
-  await boughtItem.save();
-  await ActiveItem.findOne({
-    nftAddress: decodedLog["nftAddress"],
-    tokenId: decodedLog["tokenId"],
-  }).deleteMany();
+  if (req.body.logs.length > 0) {
+    console.log(req.body.logs);
+    await connectMongo();
+    const logData = req.body.logs[0]?.data;
+    const logTopics = [
+      req.body.logs[0]?.topic0,
+      req.body.logs[0]?.topic1,
+      req.body.logs[0]?.topic2,
+      req.body.logs[0]?.topic3,
+    ];
+    const decodedLog = web3.eth.abi.decodeLog(abi, logData, logTopics);
+    console.log(decodedLog);
+    var boughtItem = new BoughtItem({
+      buyer: decodedLog["buyer"],
+      nftAddress: decodedLog["nftAddress"],
+      tokenId: decodedLog["tokenId"],
+      price: decodedLog["price"],
+    });
+    await boughtItem.save();
+    await ActiveItem.findOne({
+      nftAddress: decodedLog["nftAddress"],
+      tokenId: decodedLog["tokenId"],
+    }).deleteMany();
 
-  res.status(200).send();
+    res.status(200).send();
+  } else {
+    res.status(200).send();
+  }
 }
